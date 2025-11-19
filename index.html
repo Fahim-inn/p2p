@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>P2P ERP Demo</title>
+  <!-- Tailwind Play CDN for quick prototyping -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="antialiased">
+  <div id="root"></div>
+
+  <!-- React + ReactDOM (UMD builds) -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel to transform JSX in the browser for quick demo (not for production) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    /* Small inline SVG icon components to avoid external icon libs */
+    const Icon = ({ children, className = 'w-5 h-5' }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">{children}</svg>
+    );
+
+    const ShoppingCart = (props) => (
+      <Icon {...props}><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></Icon>
+    );
+    const FileText = (props) => (
+      <Icon {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></Icon>
+    );
+    const Package = (props) => (
+      <Icon {...props}><path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4.45a2 2 0 0 0 2 0l7-4.45A2 2 0 0 0 21 16z"/></Icon>
+    );
+    const DollarSign = (props) => (
+      <Icon {...props}><path d="M12 1v22"/><path d="M17 5H9.5a3 3 0 1 0 0 6H14a3 3 0 1 1 0 6H6"/></Icon>
+    );
+    const Users = (props) => (
+      <Icon {...props}><path d="M17 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><circle cx="17" cy="7" r="4"/></Icon>
+    );
+    const Plus = (props) => (
+      <Icon {...props}><path d="M12 5v14M5 12h14"/></Icon>
+    );
+    const Search = (props) => (
+      <Icon {...props}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></Icon>
+    );
+    const Filter = (props) => (
+      <Icon {...props}><path d="M22 6H2l8 7v7l4-2v-5z"/></Icon>
+    );
+    const Eye = (props) => (
+      <Icon {...props}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></Icon>
+    );
+    const Check = (props) => (
+      <Icon {...props}><path d="M20 6L9 17l-5-5"/></Icon>
+    );
+    const X = (props) => (
+      <Icon {...props}><path d="M18 6L6 18M6 6l12 12"/></Icon>
+    );
+    const Edit2 = (props) => (
+      <Icon {...props}><path d="M3 21l3-1 11-11a2.8 2.8 0 0 0 0-4l-1-1a2.8 2.8 0 0 0-4 0L1 15v4z"/></Icon>
+    );
+    const Trash2 = (props) => (
+      <Icon {...props}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></Icon>
+    );
+
+    function P2PERP(){
+      const [activeTab, setActiveTab] = useState('dashboard');
+      const [showModal, setShowModal] = useState(false);
+      const [modalType, setModalType] = useState('');
+      const [selectedItem, setSelectedItem] = useState(null);
+
+      const [requisitions, setRequisitions] = useState([
+        { id: 'PR-001', date: '2025-11-10', requestor: 'John Doe', department: 'IT', items: 3, total: 5420, status: 'Pending' },
+        { id: 'PR-002', date: '2025-11-11', requestor: 'Jane Smith', department: 'Marketing', items: 2, total: 3200, status: 'Approved' },
+        { id: 'PR-003', date: '2025-11-12', requestor: 'Mike Johnson', department: 'Operations', items: 5, total: 8900, status: 'Rejected' }
+      ]);
+
+      const [purchaseOrders, setPurchaseOrders] = useState([
+        { id: 'PO-001', date: '2025-11-11', vendor: 'Tech Supplies Inc', items: 3, total: 5420, status: 'Sent', delivery: '2025-11-20' },
+        { id: 'PO-002', date: '2025-11-12', vendor: 'Office Depot', items: 2, total: 3200, status: 'Acknowledged', delivery: '2025-11-18' }
+      ]);
+
+      const [vendors, setVendors] = useState([
+        { id: 'V-001', name: 'Tech Supplies Inc', category: 'IT Equipment', email: 'contact@techsupplies.com', phone: '555-0100', rating: 4.5 },
+        { id: 'V-002', name: 'Office Depot', category: 'Office Supplies', email: 'sales@officedepot.com', phone: '555-0200', rating: 4.2 },
+        { id: 'V-003', name: 'Industrial Parts Co', category: 'Manufacturing', email: 'info@industrialparts.com', phone: '555-0300', rating: 4.8 }
+      ]);
+
+      const [receipts, setReceipts] = useState([
+        { id: 'GR-001', poId: 'PO-001', date: '2025-11-13', items: 3, received: 3, status: 'Complete' },
+        { id: 'GR-002', poId: 'PO-002', date: '2025-11-13', items: 2, received: 1, status: 'Partial' }
+      ]);
+
+      const [invoices, setInvoices] = useState([
+        { id: 'INV-001', poId: 'PO-001', vendor: 'Tech Supplies Inc', date: '2025-11-13', amount: 5420, due: '2025-12-13', status: 'Pending' },
+        { id: 'INV-002', poId: 'PO-002', vendor: 'Office Depot', date: '2025-11-12', amount: 3200, due: '2025-12-12', status: 'Approved' }
+      ]);
+
+      const stats = {
+        pendingRequisitions: requisitions.filter(r => r.status === 'Pending').length,
+        activePOs: purchaseOrders.filter(po => po.status !== 'Completed').length,
+        pendingInvoices: invoices.filter(inv => inv.status === 'Pending').length,
+        totalSpend: invoices.reduce((sum, inv) => sum + inv.amount, 0)
+      };
+
+      const openModal = (type, item = null) => { setModalType(type); setSelectedItem(item); setShowModal(true); };
+      const closeModal = () => { setShowModal(false); setModalType(''); setSelectedItem(null); };
+
+      const getStatusColor = (status) => {
+        const colors = {
+          'Pending': 'bg-yellow-100 text-yellow-800',
+          'Approved': 'bg-green-100 text-green-800',
+          'Rejected': 'bg-red-100 text-red-800',
+          'Sent': 'bg-blue-100 text-blue-800',
+          'Acknowledged': 'bg-purple-100 text-purple-800',
+          'Complete': 'bg-green-100 text-green-800',
+          'Partial': 'bg-orange-100 text-orange-800',
+          'Completed': 'bg-gray-100 text-gray-800'
+        };
+        return colors[status] || 'bg-gray-100 text-gray-800';
+      };
+
+      const DashboardView = () => (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Pending Requisitions</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{stats.pendingRequisitions}</p>
+                </div>
+                <div className="bg-blue-100 p-3 rounded-full">
+                  <ShoppingCart className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Active POs</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{stats.activePOs}</p>
+                </div>
+                <div className="bg-green-100 p-3 rounded-full">
+                  <FileText className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Pending Invoices</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{stats.pendingInvoices}</p>
+                </div>
+                <div className="bg-purple-100 p-3 rounded-full">
+                  <DollarSign className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Spend (MTD)</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">${stats.totalSpend.toLocaleString()}</p>
+                </div>
+                <div className="bg-orange-100 p-3 rounded-full">
+                  <DollarSign className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold mb-4">Recent Requisitions</h3>
+              <div className="space-y-3">
+                {requisitions.slice(0, 3).map(req => (
+                  <div key={req.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <div>
+                      <p className="font-medium">{req.id}</p>
+                      <p className="text-sm text-gray-600">{req.requestor} - {req.department}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(req.status)}`}>
+                      {req.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold mb-4">Upcoming Deliveries</h3>
+              <div className="space-y-3">
+                {purchaseOrders.slice(0, 3).map(po => (
+                  <div key={po.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <div>
+                      <p className="font-medium">{po.id}</p>
+                      <p className="text-sm text-gray-600">{po.vendor}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{po.delivery}</p>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(po.status)}`}>
+                        {po.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+      const RequisitionsView = () => (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Purchase Requisitions</h2>
+            <button onClick={() => openModal('requisition') } className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700">
+              <Plus className="w-4 h-4" /> New Requisition
+            </button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-4 border-b border-gray-200">
+              <div className="flex gap-4">
+                <div className="flex-1 relative">
+                  <Search className="w-5 h-5 absolute left-3 top-2.5 text-gray-400" />
+                  <input type="text" placeholder="Search requisitions..." className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <button className="px-4 py-2 border border-gray-300 rounded-lg flex items-center gap-2 hover:bg-gray-50"><Filter className="w-4 h-4" /> Filter</button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Requestor</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {requisitions.map(req => (
+                    <tr key={req.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm font-medium">{req.id}</td>
+                      <td className="px-6 py-4 text-sm">{req.date}</td>
+                      <td className="px-6 py-4 text-sm">{req.requestor}</td>
+                      <td className="px-6 py-4 text-sm">{req.department}</td>
+                      <td className="px-6 py-4 text-sm">{req.items}</td>
+                      <td className="px-6 py-4 text-sm">${req.total.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm"><span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(req.status)}`}>{req.status}</span></td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex gap-2">
+                          <button className="p-1 hover:bg-gray-100 rounded" onClick={() => openModal('view', req)}><Eye className="w-4 h-4 text-gray-600" /></button>
+                          <button className="p-1 hover:bg-gray-100 rounded"><Edit2 className="w-4 h-4 text-gray-600" /></button>
+                          <button className="p-1 hover:bg-gray-100 rounded"><Trash2 className="w-4 h-4 text-red-600" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+
+      const PurchaseOrdersView = () => (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Purchase Orders</h2>
+            <button onClick={() => openModal('po')} className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"><Plus className="w-4 h-4" /> Create PO</button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PO ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendor</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Delivery Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {purchaseOrders.map(po => (
+                    <tr key={po.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm font-medium">{po.id}</td>
+                      <td className="px-6 py-4 text-sm">{po.date}</td>
+                      <td className="px-6 py-4 text-sm">{po.vendor}</td>
+                      <td className="px-6 py-4 text-sm">{po.items}</td>
+                      <td className="px-6 py-4 text-sm">${po.total.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm">{po.delivery}</td>
+                      <td className="px-6 py-4 text-sm"><span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(po.status)}`}>{po.status}</span></td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex gap-2">
+                          <button className="p-1 hover:bg-gray-100 rounded"><Eye className="w-4 h-4 text-gray-600" /></button>
+                          <button className="p-1 hover:bg-gray-100 rounded"><Edit2 className="w-4 h-4 text-gray-600" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+
+      const VendorsView = () => (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Vendor Management</h2>
+            <button onClick={() => openModal('vendor')} className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"><Plus className="w-4 h-4" /> Add Vendor</button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {vendors.map(vendor => (
+              <div key={vendor.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="bg-blue-100 p-3 rounded-full"><Users className="w-6 h-6 text-blue-600" /></div>
+                  <div className="flex gap-2"><button className="p-1 hover:bg-gray-100 rounded"><Edit2 className="w-4 h-4 text-gray-600" /></button><button className="p-1 hover:bg-gray-100 rounded"><Trash2 className="w-4 h-4 text-red-600" /></button></div>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{vendor.name}</h3>
+                <p className="text-sm text-gray-600 mb-3">{vendor.category}</p>
+                <div className="space-y-2 text-sm">
+                  <p className="text-gray-600">{vendor.email}</p>
+                  <p className="text-gray-600">{vendor.phone}</p>
+                  <div className="flex items-center gap-2 pt-2"><span className="text-yellow-500">★</span><span className="font-medium">{vendor.rating}</span><span className="text-gray-500">/5.0</span></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+
+      const ReceiptsView = () => (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Goods Receipt</h2>
+            <button onClick={() => openModal('receipt')} className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"><Plus className="w-4 h-4" /> Record Receipt</button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Receipt ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PO ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items Ordered</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items Received</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {receipts.map(receipt => (
+                    <tr key={receipt.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm font-medium">{receipt.id}</td>
+                      <td className="px-6 py-4 text-sm">{receipt.poId}</td>
+                      <td className="px-6 py-4 text-sm">{receipt.date}</td>
+                      <td className="px-6 py-4 text-sm">{receipt.items}</td>
+                      <td className="px-6 py-4 text-sm">{receipt.received}</td>
+                      <td className="px-6 py-4 text-sm"><span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(receipt.status)}`}>{receipt.status}</span></td>
+                      <td className="px-6 py-4 text-sm"><div className="flex gap-2"><button className="p-1 hover:bg-gray-100 rounded"><Eye className="w-4 h-4 text-gray-600" /></button></div></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+
+      const InvoicesView = () => (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Invoice Processing</h2>
+            <button onClick={() => openModal('invoice')} className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"><Plus className="w-4 h-4" /> Add Invoice</button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PO ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendor</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {invoices.map(invoice => (
+                    <tr key={invoice.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm font-medium">{invoice.id}</td>
+                      <td className="px-6 py-4 text-sm">{invoice.poId}</td>
+                      <td className="px-6 py-4 text-sm">{invoice.vendor}</td>
+                      <td className="px-6 py-4 text-sm">{invoice.date}</td>
+                      <td className="px-6 py-4 text-sm">${invoice.amount.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm">{invoice.due}</td>
+                      <td className="px-6 py-4 text-sm"><span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>{invoice.status}</span></td>
+                      <td className="px-6 py-4 text-sm"><div className="flex gap-2"><button className="p-1 hover:bg-green-100 rounded" title="Approve"><Check className="w-4 h-4 text-green-600" /></button><button className="p-1 hover:bg-red-100 rounded" title="Reject"><X className="w-4 h-4 text-red-600" /></button><button className="p-1 hover:bg-gray-100 rounded"><Eye className="w-4 h-4 text-gray-600" /></button></div></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="min-h-screen bg-gray-50">
+          <header className="bg-white shadow-sm border-b border-gray-200">
+            <div className="max-w-7xl mx-auto px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-600 p-2 rounded-lg"><ShoppingCart className="w-6 h-6 text-white" /></div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">P2P ERP System</h1>
+                    <p className="text-sm text-gray-600">Procure-to-Pay Management</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4"><div className="text-right"><p className="text-sm font-medium">Admin User</p><p className="text-xs text-gray-600">admin@company.com</p></div></div>
+              </div>
+            </div>
+          </header>
+
+          <nav className="bg-white border-b border-gray-200">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex gap-1">
+                {[
+                  { id: 'dashboard', label: 'Dashboard', icon: ShoppingCart },
+                  { id: 'requisitions', label: 'Requisitions', icon: FileText },
+                  { id: 'orders', label: 'Purchase Orders', icon: ShoppingCart },
+                  { id: 'vendors', label: 'Vendors', icon: Users },
+                  { id: 'receipts', label: 'Goods Receipt', icon: Package },
+                  { id: 'invoices', label: 'Invoices', icon: DollarSign }
+                ].map(tab => (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-3 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${activeTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}>
+                    <tab.icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </nav>
+
+          <main className="max-w-7xl mx-auto px-6 py-8">
+            {activeTab === 'dashboard' && <DashboardView />}
+            {activeTab === 'requisitions' && <RequisitionsView />}
+            {activeTab === 'orders' && <PurchaseOrdersView />}
+            {activeTab === 'vendors' && <VendorsView />}
+            {activeTab === 'receipts' && <ReceiptsView />}
+            {activeTab === 'invoices' && <InvoicesView />}
+
+            {/* Simple modal for viewing item details (basic demo) */}
+            {showModal && (
+              <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg shadow-lg w-11/12 md:w-2/3 p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">{modalType === 'view' && selectedItem ? `${selectedItem.id} Details` : modalType.charAt(0).toUpperCase() + modalType.slice(1)}</h3>
+                    <button onClick={closeModal} className="p-2 rounded hover:bg-gray-100"><X className="w-4 h-4" /></button>
+                  </div>
+
+                  <div>
+                    {modalType === 'view' && selectedItem && (
+                      <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded">{JSON.stringify(selectedItem, null, 2)}</pre>
+                    )}
+                    {(modalType === 'requisition' || modalType === 'po' || modalType === 'vendor' || modalType === 'receipt' || modalType === 'invoice') && (
+                      <p className="text-sm text-gray-600">This is a demo form placeholder. Replace with real form fields as needed.</p>
+                    )}
+                  </div>
+
+                  <div className="mt-4 text-right">
+                    <button onClick={closeModal} className="px-4 py-2 bg-gray-100 rounded mr-2">Close</button>
+                    <button onClick={closeModal} className="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </main>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<P2PERP />);
+  </script>
+</body>
+</html>
